@@ -3,9 +3,18 @@ package com.cpbonnell.PlayingCards;
 import java.util.*;
 
 /**
- * Created by Christian on 6/13/2015.
+ * Workhorse class, providing most of the functionality of the package.
  */
-public class BasePlayingDeck {
+class BasePlayingDeck implements IPlayingDeck {
+    
+    // A private variable to allow the deck to be locked into a "read only"
+    // mode during event calls, so that its state may be observed by event
+    // handlers, but not modified. This both prevents cheating, and avoids
+    // infinite loops where an event handler generates new events.
+    private boolean isReadOnly = false;
+    
+    // A deckWatcher object to handle the relations with various event listeners
+    BaseDeckWatcher eventCaller;
     
     // A random number generator for all the shuffling and other randomization that
     // is needed throughout the life of the deck.
@@ -20,7 +29,7 @@ public class BasePlayingDeck {
     private Queue<IPlayingCard> faceDownPile;
     private Stack<IPlayingCard> discardPile;
     
-    
+    //==================== Constructors ====================
     public BasePlayingDeck(List<IPlayingCard> values){
         
         // Instantiate the random number generator, seeding it based on the
@@ -35,18 +44,20 @@ public class BasePlayingDeck {
         this.discardPile = new Stack<>();
         this.outstandingCards = new ArrayList<>();
         
-        // Make a facade object for each of the actual values, and place it in the 
-        // discard pile.
-        for(IPlayingCard c : this.cardValues){
-            IPlayingCard f = new SecurePlayingCard(c);
-            this.discardPile.push(f);
-        }
+        // Instantiate the helper classes
+        this.eventCaller = new BaseDeckWatcher();
+        this.eventCaller.setEntryCriticalSection("lock");
+        
+        
         
         
         //TODO: Finish this constructor method.
     }
-    
-    
+
+    /**
+     * Shuffles the whole discard pile back into the deck.
+     */
+    @Override
     public void shuffle(){
         this.shuffle(0);
     }
@@ -63,6 +74,7 @@ public class BasePlayingDeck {
      * </p>
      * @param leaveTopDiscards The number of cards to leave on top of the discard pile.
      */
+    @Override
     public void shuffle(int leaveTopDiscards){
         
         // Pull remaining cards from the discard pile at random and place them in the
@@ -81,17 +93,22 @@ public class BasePlayingDeck {
             IPlayingCard c = this.discardPile.elementAt(i);
             this.faceDownPile.add(c);
             this.discardPile.removeElementAt(i);
-            
-            //TODO (cpb): add a call to the deck-shuffled event here once it is implemented.
         }// END while
         
         
-    }// END shuffle
+        //DONE (cpb): add a call to the deck-shuffled event here once it is implemented.
+        // Lock the deck, raise the appropriate event, unlock, and return
+        this.lock();
+        this.eventCaller.onDeckShuffled(this);
+        this.unlock();
+    }
+    // END shuffle
 
     /**
      * Shows the rank of the top card on the discard pile.
      * @return The rank of the top card on the discard pile
      */
+    @Override
     public Ranks viewDiscardRank(){
         return this.discardPile.peek().rank();
     }
@@ -100,11 +117,31 @@ public class BasePlayingDeck {
      * Shows the suit of the top card on the discard pile
      * @return The suit of the top card on the discard pile.
      */
+    @Override
     public Suits viewDiscardSuit(){
         return this.discardPile.peek().suit();
     }
+
+    /**
+     * Gets the total number of distinct card objects belonging to the object.
+     * @return The number of card objects belonging to the deck.
+     */
+    @Override
+    public int deckSize(){
+        return this.cardValues.size();
+    }
     
     
+    
+    
+    //==================== Private Helper Functions ====================
+    protected void lock(){
+        this.isReadOnly = true;
+    }
+    
+    protected void unlock(){
+        this.isReadOnly = false;
+    }
     
     
 }
