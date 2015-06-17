@@ -10,15 +10,18 @@ public class Main {
         
         Stack<String> s = new Stack();
         
-        s.push("One");
-        s.push("two");
-        s.push("three");
-        s.push("Four");
+        List<IPlayingCard> cards = new ArrayList<>();
         
-        for(int i = 0; i < s.size(); i++){
-            System.out.println("The element at index " + i + " is " + s.elementAt(i));
+        for(Ranks r : Ranks.values()){
+            cards.add(new BasePlayingCard(r, Suits.CLUBS));
         }
         
+        
+        BasePlayingDeck d = new BasePlayingDeck(cards);
+        d.shuffle();
+        
+        
+        System.out.println("Execution complete.");
         
         
     }

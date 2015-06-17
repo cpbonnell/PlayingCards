@@ -6,6 +6,8 @@ package com.cpbonnell.PlayingCards;
 public interface IPlayingDeck {
 
 
+    // Methods for shuffling and looking at the top of the discard pile.
+    
     void shuffle();
 
     void shuffle(int leaveTopDiscards);
@@ -14,6 +16,23 @@ public interface IPlayingDeck {
 
     Suits viewDiscardSuit();
 
-    int deckSize();
     
+    // Methods to look at the size of the various parts of the deck.
+    
+    int drawPileSize();
+    
+    int discardPileSize();
+    
+    int outstandingSize();
+    
+    int totalSize();
+    
+    
+    // Methods for drawing and discarding
+    
+    IPlayingCard drawCard();
+    
+    IPlayingCard drawDiscard();
+    
+    boolean discardCard(IPlayingCard c);
 }

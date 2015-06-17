@@ -3,8 +3,7 @@ package com.cpbonnell.PlayingCards;
 import com.cpbonnell.PlayingCards.DeckEvents.ICardDiscardedListener;
 import com.cpbonnell.PlayingCards.DeckEvents.ICardDrawnListener;
 import com.cpbonnell.PlayingCards.DeckEvents.IDeckShuffledListener;
-import com.cpbonnell.PlayingCards.DeckEvents.IEventCriticalSection;
-import com.cpbonnell.PlayingCards.IPlayingDeck;
+import com.cpbonnell.PlayingCards.DeckEvents.IEventCriticalSections;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
@@ -30,40 +29,13 @@ public class BaseDeckWatcher {
     
     String preEvent;
     String postEvent;
+    IEventCriticalSections criticalSections = null;
     
-    public void setEntryCriticalSection(String e){
-        this.preEvent = e;
-    }
     
-    public void setExitCriticalSection(String e){
-        this.postEvent = e;
+    public BaseDeckWatcher(IEventCriticalSections c){
+        this.criticalSections = c;
     }
     
-    private void performEntryCriticalSection(Object caller){
-
-        try {
-            caller.getClass().getMethod(this.preEvent).invoke(caller);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private void performExitCriticalSection(Object caller){
-
-        try {
-            caller.getClass().getMethod(this.postEvent).invoke(caller);
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        }
-    }
     
     //==================== Functions for the CardDrawn Event ====================
     public void addCardDrawnListener(ICardDrawnListener listener){
@@ -80,8 +52,9 @@ public class BaseDeckWatcher {
     
     public void onCardDrawn(IPlayingDeck d){
         if( ! cardDrawnListeners.isEmpty() ){
-            
+            this.criticalSections.entryCriticalSection();
             cardDrawnListeners.stream().forEach(o -> o.CardDrawnEventHandler(d));
+            this.criticalSections.exitCriticalSection();
         }
     }
     
@@ -101,7 +74,9 @@ public class BaseDeckWatcher {
 
     public void onCardDiscarded(IPlayingDeck d){
         if( ! cardDiscardedListeners.isEmpty() ){
+            this.criticalSections.entryCriticalSection();
             cardDiscardedListeners.stream().forEach(o -> o.CardDiscardedEventListener(d));
+            this.criticalSections.exitCriticalSection();
         }
     }
 
@@ -120,7 +95,9 @@ public class BaseDeckWatcher {
 
     public void onDeckShuffled(IPlayingDeck d){
         if( ! deckShuffledListeners.isEmpty() ){
+            this.criticalSections.entryCriticalSection();
             deckShuffledListeners.stream().forEach(o -> o.DeckShuffledEventListener(d));
+            this.criticalSections.exitCriticalSection();
         }
     }
     
