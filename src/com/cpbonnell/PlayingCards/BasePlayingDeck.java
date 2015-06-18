@@ -1,13 +1,11 @@
 package com.cpbonnell.PlayingCards;
 
-import com.cpbonnell.PlayingCards.DeckEvents.IEventCriticalSections;
-
 import java.util.*;
 
 /**
  * Workhorse class, providing most of the functionality of the package.
  */
-class BasePlayingDeck implements IPlayingDeck, IEventCriticalSections {
+class BasePlayingDeck implements IPlayingDeck {
     
     // A private variable to allow the deck to be locked into a "read only"
     // mode during event calls, so that its state may be observed by event
@@ -48,10 +46,9 @@ class BasePlayingDeck implements IPlayingDeck, IEventCriticalSections {
         this.discardPile = new Stack<>();
         this.outstandingCards = new ArrayList<>();
         
-        // Instantiate the helper classes, and pass it a reference to the this object
-        // through the IEventCriticalSections interface, allowing the deck watcher
-        // to access the critical sections of the deck to lock it before calling events.
-        this.eventCaller = new BaseDeckWatcher(this);
+        // Instantiate the helper classes, and pass it a reference to the the
+        // lock and unlock functions.
+        this.eventCaller = new BaseDeckWatcher(this::lock, this::unlock);
         
         
         
@@ -219,31 +216,44 @@ class BasePlayingDeck implements IPlayingDeck, IEventCriticalSections {
     public boolean discardCard(IPlayingCard c) {
         
         // First make sure that the parameter is a valid card facade object...
-        SecurePlayingCard s = null;
         if(c.getClass() != SecurePlayingCard.class){
-            s = (SecurePlayingCard)c;
-        } else {
+            //DONE(cpb): Raise an invalid discard event here
+            this.eventCaller.onInvalidDiscard(this);
             return false;
         }
         
+        // We have verified that the parameter c is indeed a SecurePlayingCard, so
+        // it is safe to cast it and gain access to the object's additional functionality.
+        SecurePlayingCard facade = (SecurePlayingCard) c;
+        
+        
         // Find the corresponding valued card in the outstanding cards list...
-        //TODO(cpb): I'm in the middle of implementing this method...
+        //NOTE: The method reference may be replaced with the lambda "o -> facade.pointsAt(o)" ...
+        // not sure which is clearer, and may swap them out later.
+        IPlayingCard target = this.outstandingCards.stream().filter( facade::pointsAt ).findFirst().get();
         
+        // We now want to remove the target card from the list of outstanding cards,
+        // and put it on top of the discard pile...
+        this.outstandingCards.remove(target);
+        this.discardPile.push(target);
         
-        return false;
+        // Lastly, we want to invalidate the card facade that was passed as a parameter,
+        // raise a card discarded event, and return true to indicate that the
+        // operation was successful.
+        facade.invalidate();
+        this.eventCaller.onCardDiscarded(this);
+        return true;
     }
 
 
     //==================== Private Helper Functions ====================
 
-
-    @Override
-    public void entryCriticalSection() {
+    
+    private void lock() {
         this.isReadOnly = true;
     }
-
-    @Override
-    public void exitCriticalSection() {
+    
+    private void unlock() {
         this.isReadOnly = false;
     }
 }

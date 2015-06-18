@@ -45,7 +45,7 @@ class SecurePlayingCard implements IPlayingCard {
         this.referencedCard = SecurePlayingCard.BLANK_CARD;
     }
     
-    public boolean isValid(IPlayingCard c){
+    public boolean pointsAt(IPlayingCard c){
         return this.referencedCard == c && this.isValid();
     }
     

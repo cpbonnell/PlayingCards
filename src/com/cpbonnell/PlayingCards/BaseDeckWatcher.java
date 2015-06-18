@@ -1,11 +1,7 @@
 package com.cpbonnell.PlayingCards;
 
-import com.cpbonnell.PlayingCards.DeckEvents.ICardDiscardedListener;
-import com.cpbonnell.PlayingCards.DeckEvents.ICardDrawnListener;
-import com.cpbonnell.PlayingCards.DeckEvents.IDeckShuffledListener;
-import com.cpbonnell.PlayingCards.DeckEvents.IEventCriticalSections;
+import com.cpbonnell.PlayingCards.DeckEvents.*;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 /**
@@ -26,14 +22,31 @@ public class BaseDeckWatcher {
     List<ICardDrawnListener> cardDrawnListeners = new ArrayList<>();
     List<ICardDiscardedListener> cardDiscardedListeners = new ArrayList<>();
     List<IDeckShuffledListener> deckShuffledListeners = new ArrayList<>();
+    List<IInvalidDiscardListener> invalidDiscardListeners = new ArrayList<>();
+    
     
     String preEvent;
     String postEvent;
-    IEventCriticalSections criticalSections = null;
+    IEventCriticalSection entryCriticalSection;
+    IEventCriticalSection exitCriticalSection;
     
-    
-    public BaseDeckWatcher(IEventCriticalSections c){
-        this.criticalSections = c;
+    public BaseDeckWatcher(IEventCriticalSection entrySection, IEventCriticalSection exitSection){
+        
+        // If no callback is supplied for the critical sections, we supply a default
+        // method in the form of a lambda that does nothing. This makes later code
+        // much simpler, since it can call the entry section and exit section
+        // wiothout having to first check for null values.
+        if(entrySection == null){
+            this.entryCriticalSection = () -> {return;};
+        } else {
+            this.entryCriticalSection = entrySection;
+        }
+        
+        if(exitSection == null){
+            this.exitCriticalSection = () ->{return;};
+        } else {
+            this.exitCriticalSection = exitSection;
+        }
     }
     
     
@@ -52,9 +65,9 @@ public class BaseDeckWatcher {
     
     public void onCardDrawn(IPlayingDeck d){
         if( ! cardDrawnListeners.isEmpty() ){
-            this.criticalSections.entryCriticalSection();
+            this.entryCriticalSection.criticalSection();
             cardDrawnListeners.stream().forEach(o -> o.CardDrawnEventHandler(d));
-            this.criticalSections.exitCriticalSection();
+            this.exitCriticalSection.criticalSection();
         }
     }
     
@@ -74,9 +87,9 @@ public class BaseDeckWatcher {
 
     public void onCardDiscarded(IPlayingDeck d){
         if( ! cardDiscardedListeners.isEmpty() ){
-            this.criticalSections.entryCriticalSection();
+            this.entryCriticalSection.criticalSection();
             cardDiscardedListeners.stream().forEach(o -> o.CardDiscardedEventListener(d));
-            this.criticalSections.exitCriticalSection();
+            this.exitCriticalSection.criticalSection();
         }
     }
 
@@ -95,9 +108,30 @@ public class BaseDeckWatcher {
 
     public void onDeckShuffled(IPlayingDeck d){
         if( ! deckShuffledListeners.isEmpty() ){
-            this.criticalSections.entryCriticalSection();
+            this.entryCriticalSection.criticalSection();
             deckShuffledListeners.stream().forEach(o -> o.DeckShuffledEventListener(d));
-            this.criticalSections.exitCriticalSection();
+            this.exitCriticalSection.criticalSection();
+        }
+    }
+
+    //==================== Functions for the Invalid Discard Event ====================
+    public void addInvalidDiscardListener(IInvalidDiscardListener listener){
+        if( ! invalidDiscardListeners.contains(listener) ){
+            invalidDiscardListeners.add(listener);
+        }
+    }
+
+    public void removeInvalidDiscardListener(IInvalidDiscardListener listener){
+        if(invalidDiscardListeners.contains(listener)){
+            invalidDiscardListeners.remove(listener);
+        }
+    }
+
+    public void onInvalidDiscard(IPlayingDeck d){
+        if( ! invalidDiscardListeners.isEmpty() ){
+            this.entryCriticalSection.criticalSection();
+            invalidDiscardListeners.stream().forEach(o -> o.InvalidDiscardEventHandler(d));
+            this.exitCriticalSection.criticalSection();
         }
     }
     
