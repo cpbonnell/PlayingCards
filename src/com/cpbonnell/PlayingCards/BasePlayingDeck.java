@@ -203,7 +203,8 @@ class BasePlayingDeck implements IPlayingDeck {
         // Move the actual card into the list of outstanding cards
         this.outstandingCards.add(c);
         
-        // Return the facade to the caller
+        // Raise the card drawn event, and return the facade to the caller
+        this.eventCaller.onCardDrawn(this);
         return f;
     }
 
