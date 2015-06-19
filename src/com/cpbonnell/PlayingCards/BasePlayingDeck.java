@@ -1,5 +1,7 @@
 package com.cpbonnell.PlayingCards;
 
+import com.cpbonnell.PlayingCards.DeckEvents.ICardDrawnListener;
+
 import java.util.*;
 
 /**
@@ -188,8 +190,6 @@ class BasePlayingDeck implements IPlayingDeck {
             } else if(this.outstandingCards.size() == this.cardValues.size()){
                 // Maybe all the available cards are still in the hands of various users, and
                 // we can't do anything about it...
-                
-                // TODO(cpb): Add an event here to signal that no more cards can be drawn
                 return null;
             }
         }
@@ -257,4 +257,5 @@ class BasePlayingDeck implements IPlayingDeck {
     private void unlock() {
         this.isReadOnly = false;
     }
+    
 }
