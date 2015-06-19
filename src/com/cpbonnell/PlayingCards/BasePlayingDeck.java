@@ -15,6 +15,10 @@ class BasePlayingDeck implements IPlayingDeck {
     // infinite loops where an event handler generates new events.
     private boolean isReadOnly;
     
+    // Other variables that specify optional deck behaviors
+    private boolean allowDrawFromDiscard;
+    private boolean allowShuffle;
+    
     // A deckWatcher object to handle the relations with various event listeners
     BaseDeckWatcher eventCaller;
     
@@ -31,10 +35,12 @@ class BasePlayingDeck implements IPlayingDeck {
     private Queue<IPlayingCard> drawPile;
     private Stack<IPlayingCard> discardPile;
     
-    //==================== Constructors ====================
+    //============================== Constructors ==============================
     public BasePlayingDeck(List<IPlayingCard> values){
         
         this.isReadOnly = false;
+        this.allowDrawFromDiscard = true;
+        this.allowShuffle = true;
         
         // Instantiate the random number generator, seeding it based on the
         // current time to keep things from progressing the same way every game.
@@ -51,55 +57,78 @@ class BasePlayingDeck implements IPlayingDeck {
         // Instantiate the helper classes, and pass it a reference to the the
         // lock and unlock functions.
         this.eventCaller = new BaseDeckWatcher(this::lock, this::unlock);
-        
-        
-        
-        
     }
 
     /**
-     * Shuffles the whole discard pile back into the deck.
+     * Static method to construct a standard 52 card French deck.
+     * @return An object implementing IPlayingCard.
      */
-    @Override
-    public void shuffle(){
-        this.shuffle(0);
+    public static IPlayingDeck newStandardFrenchDeck(){
+        
+        // Make a list to hold the card values
+        List<IPlayingCard> cards = new ArrayList<>();
+        
+        // Populate the list with the appropriate values
+        for(Suits s: Suits.values()){
+            for(Ranks r: Ranks.values()){
+                cards.add(new BasePlayingCard(r, s));
+            }
+        }
+        
+        
+        // Construct the deck object
+        BasePlayingDeck deck = new BasePlayingDeck(cards);
+        
+        // Set the default values
+        deck.allowShuffle = true;
+        deck.allowDrawFromDiscard = true;
+        
+        // Return the deck object
+        return deck;
     }
 
     /**
-     * Shuffles the discard pile back into the deck, leaving some.
-     * <p>
-     *     This function randomizes the cards in the discard pile, and places
-     *     them at the bottom of the deck. A specified number are left at the
-     *     top of the discard pile, and not randomized or moved back into the
-     *     deck. If the number of cards specified is greater than the total
-     *     number of cards in the discard pile, then no cards are moved to
-     *     the deck.
-     * </p>
-     * @param leaveTopDiscards The number of cards to leave on top of the discard pile.
+     * Static method to construct a standard 48 card Pinochle deck.
+     * @return An object implementing IPlayingCard.
      */
-    @Override
-    public void shuffle(int leaveTopDiscards){
+    public static IPlayingDeck newPinochleDeck(){
+
+        // Make a list to hold the card values
+        List<IPlayingCard> cards = new ArrayList<>();
+
+        // Populate the list with the appropriate values
+        Ranks[] desiredRanks = {Ranks.ACE, Ranks.KING, Ranks.QUEEN, Ranks.JACK, Ranks.TEN, Ranks.NINE};
         
-        // Pull remaining cards from the discard pile at random and place them in the
-        // facedown pile.
-        while(this.discardPile.size() > leaveTopDiscards){
-            
-            // NOTE: nextInt returns a number between 0 (inclusive) and i (exclusive), so no -1 is needed
-            // at the end to keep the index in balance
-            
-            // Pick an index at random from the range to be sorted
-            int i = this.rng.nextInt(this.discardPile.size() - leaveTopDiscards);
-            i += leaveTopDiscards;
-            
-            // Place the card corresponding to that index on the bottom of the draw pile,
-            // and remove it from the discard pile
-            IPlayingCard c = this.discardPile.elementAt(i);
-            this.drawPile.add(c);
-            this.discardPile.removeElementAt(i);
-        }// END while
-        
-        // Raise the appropriate event...
-        this.eventCaller.onDeckShuffled(this);
+        for(Suits s: Suits.values()){
+            for(Ranks r: desiredRanks){
+                cards.add(new BasePlayingCard(r, s));
+                cards.add(new BasePlayingCard(r, s));
+            }
+        }
+
+
+        // Construct the deck object
+        BasePlayingDeck deck = new BasePlayingDeck(cards);
+
+        // Set the default values
+        deck.allowShuffle = true;
+        deck.allowDrawFromDiscard = true;
+
+        // Return the deck object
+        return deck;
+    }
+    
+    
+    
+    //============================== Accessors ==============================
+    // Make the event manager and the deck state public
+
+    /**
+     * Get access to the deck manager to register or unregister event listeners.
+     * @return A reference to the Deck's event manager object.
+     */
+    IDeckEventManager getEventManager(){
+        return this.eventCaller;
     }
 
     /**
@@ -165,6 +194,62 @@ class BasePlayingDeck implements IPlayingDeck {
     }
 
 
+    //============================== Action Methods ==============================
+    // Methods that change the state of the deck. All of these raise events,
+    // and are available only when the deck is NOT locked. 
+    
+    /**
+     * Shuffles the discard pile back into the deck, leaving some.
+     * <p>
+     *     This function randomizes the cards in the discard pile, and places
+     *     them at the bottom of the deck. A specified number are left at the
+     *     top of the discard pile, and not randomized or moved back into the
+     *     deck. If the number of cards specified is greater than the total
+     *     number of cards in the discard pile, then no cards are moved to
+     *     the deck.
+     * </p>
+     * @param leaveTopDiscards The number of cards to leave on top of the discard pile.
+     */
+    @Override
+    public void shuffle(int leaveTopDiscards){
+        
+        // Exit immediately if the deck is in read-only mode, or if shuffling is not allowed
+        if(this.isReadOnly || ! this.allowShuffle ){
+            return;
+        }
+        
+        // Pull remaining cards from the discard pile at random and place them in the
+        // facedown pile.
+        while(this.discardPile.size() > leaveTopDiscards){
+            
+            // NOTE: nextInt returns a number between 0 (inclusive) and i (exclusive), so no -1 is needed
+            // at the end to keep the index in balance
+            
+            // Pick an index at random from the range to be sorted
+            int i = this.rng.nextInt(this.discardPile.size() - leaveTopDiscards);
+            i += leaveTopDiscards;
+            
+            // Place the card corresponding to that index on the bottom of the draw pile,
+            // and remove it from the discard pile
+            IPlayingCard c = this.discardPile.elementAt(i);
+            this.drawPile.add(c);
+            this.discardPile.removeElementAt(i);
+        }// END while
+        
+        // Raise the appropriate event...
+        this.eventCaller.onDeckShuffled(this);
+    }
+
+    /**
+     * Shuffles the whole discard pile back into the deck.
+     */
+    @Override
+    public void shuffle(){
+        this.shuffle(0);
+    }
+
+    
+
     /**
      * Issues a card from the dop of the draw pile.
      * <p>
@@ -178,6 +263,11 @@ class BasePlayingDeck implements IPlayingDeck {
      */
     @Override
     public IPlayingCard drawCard() {
+
+        // Exit immediately if the deck is in read-only mode.
+        if(this.isReadOnly){
+            return null;
+        }
         
         // Handle cases where there are no cards left in the draw pile
         if(this.drawPile.isEmpty()){
@@ -210,11 +300,32 @@ class BasePlayingDeck implements IPlayingDeck {
 
     @Override
     public IPlayingCard drawDiscard() {
-        return null;
+
+        // Exit immediately if the deck is in read-only mode, or if drawing from the
+        // discard pile is not enabled, or if there are no cards to be drawn.
+        if(this.isReadOnly || ! this.allowDrawFromDiscard || this.discardPile.isEmpty()){
+            return null;
+        }
+        
+        // Pull the top card off the discard pile, and create a facade wrapper around it
+        IPlayingCard actual = this.discardPile.pop();
+        IPlayingCard facade = new SecurePlayingCard(actual);
+        
+        // Put the actual card into the list of outstanding cards
+        this.outstandingCards.add(actual);
+        
+        // Raise the appropriate event, and return the facade
+        this.eventCaller.onDiscardDrawn(this);
+        return facade;
     }
 
     @Override
     public boolean discardCard(IPlayingCard c) {
+
+        // Exit immediately if the deck is in read-only mode.
+        if(this.isReadOnly){
+            return false;
+        }
         
         // First make sure that the parameter is a valid card facade object...
         if(c.getClass() != SecurePlayingCard.class){
