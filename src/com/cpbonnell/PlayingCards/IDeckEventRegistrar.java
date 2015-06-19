@@ -5,7 +5,7 @@ import com.cpbonnell.PlayingCards.DeckEvents.*;
 /**
  * Created by christian_bonnell on 6/19/2015.
  */
-public interface IDeckEventManager {
+public interface IDeckEventRegistrar {
     //==================== Functions for the CardDrawn Event ====================
     void addCardDrawnListener(ICardDrawnListener listener);
 

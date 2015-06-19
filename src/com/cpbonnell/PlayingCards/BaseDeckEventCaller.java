@@ -65,7 +65,7 @@ import java.util.*;
  *     sections to remain private to the deck object itself.
  * </p>
  */
-public class BaseDeckWatcher implements IDeckEventManager {
+public class BaseDeckEventCaller implements IDeckEventCaller {
     
     // Lists of objects listening for events...
     List<ICardDrawnListener> cardDrawnListeners = new ArrayList<>();
@@ -80,7 +80,7 @@ public class BaseDeckWatcher implements IDeckEventManager {
     IEventCriticalSection entryCriticalSection;
     IEventCriticalSection exitCriticalSection;
     
-    public BaseDeckWatcher(IEventCriticalSection entrySection, IEventCriticalSection exitSection){
+    public BaseDeckEventCaller(IEventCriticalSection entrySection, IEventCriticalSection exitSection){
         
         // If no callback is supplied for the critical sections, we supply a default
         // method in the form of a lambda that does nothing. This makes later code
@@ -115,6 +115,7 @@ public class BaseDeckWatcher implements IDeckEventManager {
         }
     }
     
+    @Override
     public void onCardDrawn(IPlayingDeck d){
         if( ! cardDrawnListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();
@@ -138,6 +139,7 @@ public class BaseDeckWatcher implements IDeckEventManager {
         }
     }
 
+    @Override
     public void onDiscardDrawn(IPlayingDeck d){
         if( ! discardDrawnListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();
@@ -162,6 +164,7 @@ public class BaseDeckWatcher implements IDeckEventManager {
         }
     }
 
+    @Override
     public void onCardDiscarded(IPlayingDeck d){
         if( ! cardDiscardedListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();
@@ -185,6 +188,7 @@ public class BaseDeckWatcher implements IDeckEventManager {
         }
     }
 
+    @Override
     public void onDeckShuffled(IPlayingDeck d){
         if( ! deckShuffledListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();
@@ -208,6 +212,7 @@ public class BaseDeckWatcher implements IDeckEventManager {
         }
     }
 
+    @Override
     public void onInvalidDiscard(IPlayingDeck d){
         if( ! invalidDiscardListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();

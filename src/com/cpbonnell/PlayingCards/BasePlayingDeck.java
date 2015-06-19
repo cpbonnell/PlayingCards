@@ -1,11 +1,59 @@
 package com.cpbonnell.PlayingCards;
 
-import com.cpbonnell.PlayingCards.DeckEvents.ICardDrawnListener;
-
 import java.util.*;
 
 /**
  * Workhorse class, providing most of the functionality of the package.
+ * <p>
+ *     The BasePlayingDeck provides functionality for any application that
+ *     needs to have basic playing card functionality. It maintains a set
+ *     of distinct cards, with duplicate values allowed. The deck then
+ *     allows cards to be drawn from a randomized, face-down draw pile,
+ *     discarded to an ordered face-up discard pile, and drawn again
+ *     from the discard pile in the order which they were discarded. Each
+ *     of these actions raises an event, which allows objects to monitor
+ *     not only the state of the deck, but also the actions of other objects
+ *     on the deck.
+ * </p>
+ * <p>
+ *     Since the base functionality by itself already amounts to a large code
+ *     file, I decided to delegate the responsibility of managing event
+ *     handlers to another class. This has the additional advantage of allowing
+ *     me to later switch the method of event handling with little or no change
+ *     needed to this file... for example switching from a one-interface-per-
+ *     event model with classes registering themselves with the event registrat,
+ *     and expose a single named event handler, to a single-interface-for-all-
+ *     events model, in which objects register their methods with the registrar
+ *     through function references, and may supply more than one handler for 
+ *     each method.
+ * </p>
+ * <p>
+ *     The BasePlayingDeck class simulates the behavior of a physical playing
+ *     deck (namely, the uniqueness of cards) by keeping an internal set of
+ *     BasePlayingCard objects that determine the values present in the deck.
+ *     When a card is "drawn" a new object of type SecurePlayingCard is
+ *     created, with an internal reference pointing to one of the
+ *     BasePlayingCard objects internal to the deck. This SecurePlayingCard
+ *     has no values stored internally, but implements the IPlayingCard
+ *     interface by mirroring the values of the playing card it points to.
+ * </p>
+ * <p>
+ *     The external user of the card has unique access to the values of that
+ *     BasePlayingCard, but when the issued SecurePlayingCard is returned using
+ *     the discardCard method, the deck uses the extra methods of the
+ *     SecurePlayingCard that the outside world does not have access to.
+ *     It ensures that the SecurePlayingCard actually does point to a
+ *     BasePlayingCard belonging to the deck. If so, then that BasePlayingCard
+ *     is moved to the structure for the discard pile. Since the object calling
+ *     the discardCard object still has a reference to the SecurePlayingCard, the
+ *     deck cannot un-instantiate the object. So the SecurePlayingCard class
+ *     contains an invalidate() method that severs the link to a BasePlayingCard,
+ *     and causes it to in stead reflect the values of a blank card. This
+ *     allows the deck to ensure that cards remain unique, and that no client
+ *     objects have attempted to "spoof" having a card with values that it did
+ *     not legitimately draw, or retain a card with values that it supposedly
+ *     discarded.
+ * </p>
  */
 class BasePlayingDeck implements IPlayingDeck {
     
@@ -19,8 +67,8 @@ class BasePlayingDeck implements IPlayingDeck {
     private boolean allowDrawFromDiscard;
     private boolean allowShuffle;
     
-    // A deckWatcher object to handle the relations with various event listeners
-    BaseDeckWatcher eventCaller;
+    // A DeckEventCaller object to handle the relations with various event listeners
+    IDeckEventCaller eventCaller;
     
     // A random number generator for all the shuffling and other randomization that
     // is needed throughout the life of the deck.
@@ -56,7 +104,7 @@ class BasePlayingDeck implements IPlayingDeck {
         
         // Instantiate the helper classes, and pass it a reference to the the
         // lock and unlock functions.
-        this.eventCaller = new BaseDeckWatcher(this::lock, this::unlock);
+        this.eventCaller = new BaseDeckEventCaller(this::lock, this::unlock);
     }
 
     /**
@@ -125,9 +173,9 @@ class BasePlayingDeck implements IPlayingDeck {
 
     /**
      * Get access to the deck manager to register or unregister event listeners.
-     * @return A reference to the Deck's event manager object.
+     * @return A reference to the Deck's event caller object.
      */
-    IDeckEventManager getEventManager(){
+    IDeckEventRegistrar getEventManager(){
         return this.eventCaller;
     }
 
@@ -193,6 +241,26 @@ class BasePlayingDeck implements IPlayingDeck {
         return this.cardValues.size();
     }
 
+    /**
+     * Determines if the specified IPlayingCard object is a valid outstanding card from this deck.
+     * @param c An objectimplementing IPlayingCard whose authenticity is in question.
+     * @return true if the card is a valid outstanding card, false if it is not.
+     */
+    @Override
+    public boolean validateOutstandingCard(IPlayingCard c){
+        
+        // Make sure that the parameter is of the proper class
+        if(c.getClass() != SecurePlayingCard.class){
+            return false;
+        }
+        
+        //Cast the parameter to a concrete type to get the additional functionality
+        SecurePlayingCard s = (SecurePlayingCard) c;
+        
+        // Scan through the BasePlayingCards in the list of outstanding cards, and
+        // if the item is found, return true. Otherwise, return false.
+         return this.outstandingCards.stream().anyMatch( s::pointsAt );
+    }
 
     //============================== Action Methods ==============================
     // Methods that change the state of the deck. All of these raise events,
