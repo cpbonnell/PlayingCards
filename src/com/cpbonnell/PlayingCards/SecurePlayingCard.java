@@ -20,35 +20,64 @@ class SecurePlayingCard implements IPlayingCard {
     
     private static final IPlayingCard BLANK_CARD = new BasePlayingCard(null, null);
     private IPlayingCard referencedCard;
-    
+
+    /**
+     * Instantiate a SecurePlayingCard object pointing to the specified parameter.
+     * @param c An object implementing IPlayingCard.
+     */
     public SecurePlayingCard(IPlayingCard c){
         this.referencedCard = c;
     }
 
 
+    /**
+     * Access the rank of the object's face value.
+     * @return The rank of this card.
+     */
     @Override
     public Ranks rank() {
         return referencedCard.rank();
     }
 
+    /**
+     * Access the suit of the object's face value.
+     * @return The suit of this card.
+     */
     @Override
     public Suits suit() {
         return referencedCard.suit();
     }
 
+    /**
+     * Determines if the face value of the parameter matches the face value of this object.
+     * @param c Another object implementing IPlayingCard
+     * @return Returns true if this.rank() == c.rank() && this.suit() == c.suit()
+     */
     @Override
     public boolean matches(IPlayingCard c) {
         return this.referencedCard.matches(c);
     }
 
+    /**
+     * Permanently breaks the objects reference, replacing it with a blank card.
+     */
     public void invalidate(){
         this.referencedCard = SecurePlayingCard.BLANK_CARD;
     }
-    
+
+    /**
+     * Determines the object that is referenced by this object.
+     * @param c An object implementing IPlayingCard.
+     * @return Returns true if this object references the parameter, false otherwise.
+     */
     public boolean pointsAt(IPlayingCard c){
         return this.referencedCard == c && this.isValid();
     }
-    
+
+    /**
+     * Determines if this object still maintains a valid reference.
+     * @return Returns true if the reference is still valid, and false if it references blank card.
+     */
     public boolean isValid(){
         return this.referencedCard != BLANK_CARD;
     }
