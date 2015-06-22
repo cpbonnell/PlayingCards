@@ -10,6 +10,6 @@ package com.cpbonnell.PlayingCards;
  *     to be called before an event is raised, and another after the event is raised.
  * </p>
  */
-public interface IEventCriticalSection {
+interface IEventCriticalSection {
     public void criticalSection();
 }

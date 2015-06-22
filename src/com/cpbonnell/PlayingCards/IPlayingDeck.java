@@ -5,6 +5,8 @@ package com.cpbonnell.PlayingCards;
  */
 public interface IPlayingDeck {
 
+    IDeckEventRegistrar getEventManager();
+
 
     // Methods for shuffling and looking at the top of the discard pile.
     

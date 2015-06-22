@@ -55,7 +55,7 @@ import java.util.*;
  *     discarded.
  * </p>
  */
-class BasePlayingDeck implements IPlayingDeck {
+public class BasePlayingDeck implements IPlayingDeck {
     
     // A private variable to allow the deck to be locked into a "read only"
     // mode during event calls, so that its state may be observed by event
@@ -81,7 +81,7 @@ class BasePlayingDeck implements IPlayingDeck {
     // The names of these collections should be fairly intuitive...
     private List<IPlayingCard> outstandingCards;
     private Queue<IPlayingCard> drawPile;
-    private Stack<IPlayingCard> discardPile;
+    private Deque<IPlayingCard> discardPile;
     
     //============================== Constructors ==============================
     public BasePlayingDeck(List<IPlayingCard> values){
@@ -99,7 +99,7 @@ class BasePlayingDeck implements IPlayingDeck {
         
         // Instantiate the other collection objects
         this.drawPile = new ArrayDeque<>();
-        this.discardPile = new Stack<>();
+        this.discardPile = new ArrayDeque<>(this.cardValues);
         this.outstandingCards = new ArrayList<>();
         
         // Instantiate the helper classes, and pass it a reference to the the
@@ -132,6 +132,7 @@ class BasePlayingDeck implements IPlayingDeck {
         deck.allowDrawFromDiscard = true;
         
         // Return the deck object
+        deck.shuffle();
         return deck;
     }
 
@@ -163,6 +164,7 @@ class BasePlayingDeck implements IPlayingDeck {
         deck.allowDrawFromDiscard = true;
 
         // Return the deck object
+        deck.shuffle();
         return deck;
     }
     
@@ -175,7 +177,7 @@ class BasePlayingDeck implements IPlayingDeck {
      * Get access to the deck manager to register or unregister event listeners.
      * @return A reference to the Deck's event caller object.
      */
-    IDeckEventRegistrar getEventManager(){
+    public IDeckEventRegistrar getEventManager(){
         return this.eventCaller;
     }
 
@@ -286,23 +288,30 @@ class BasePlayingDeck implements IPlayingDeck {
             return;
         }
         
+        // The deque collection does not allow random access, so we need to put the cards from
+        // the discard pile into a collection that will allow us to split them how we like.
+        List<IPlayingCard> replacementDiscardPile = new ArrayList<>(this.discardPile);
+
         // Pull remaining cards from the discard pile at random and place them in the
         // facedown pile.
-        while(this.discardPile.size() > leaveTopDiscards){
+        while(replacementDiscardPile.size() > leaveTopDiscards){
             
             // NOTE: nextInt returns a number between 0 (inclusive) and i (exclusive), so no -1 is needed
             // at the end to keep the index in balance
             
             // Pick an index at random from the range to be sorted
-            int i = this.rng.nextInt(this.discardPile.size() - leaveTopDiscards);
+            int i = this.rng.nextInt(replacementDiscardPile.size() - leaveTopDiscards);
             i += leaveTopDiscards;
             
             // Place the card corresponding to that index on the bottom of the draw pile,
             // and remove it from the discard pile
-            IPlayingCard c = this.discardPile.elementAt(i);
+            IPlayingCard c = replacementDiscardPile.remove(i);
             this.drawPile.add(c);
-            this.discardPile.removeElementAt(i);
         }// END while
+        
+        // We are done shuffling the discard pile, and need only replace the cards that
+        // we left at the top of the discard pile.
+        this.discardPile = new ArrayDeque<>(replacementDiscardPile);
         
         // Raise the appropriate event...
         this.eventCaller.onDeckShuffled(this);

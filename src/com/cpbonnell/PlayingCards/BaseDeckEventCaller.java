@@ -47,7 +47,7 @@ import java.util.*;
  *     sections to remain private to the deck object itself.
  * </p>
  */
-public class BaseDeckEventCaller implements IDeckEventCaller {
+class BaseDeckEventCaller implements IDeckEventCaller {
     
     // Lists of objects listening for events...
     List<ICardDrawnListener> cardDrawnListeners = new ArrayList<>();

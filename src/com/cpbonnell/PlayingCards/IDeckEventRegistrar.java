@@ -3,7 +3,14 @@ package com.cpbonnell.PlayingCards;
 import com.cpbonnell.PlayingCards.DeckEvents.*;
 
 /**
- * Created by christian_bonnell on 6/19/2015.
+ * Public interface for subscribing and unsubscribing to deck events.
+ * <p>
+ *     This interface exposes one addXxxListener method for each of the five
+ *     deck events, as well as two removeXxxxListener methods. These methods
+ *     provide for two methods of subscribing / unsubscribing for methods. For
+ *     more information, see the documentation for the BaseDeckEventCaller
+ *     class.
+ * </p>
  */
 public interface IDeckEventRegistrar {
     //==================== Functions for the CardDrawn Event ====================
