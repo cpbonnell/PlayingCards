@@ -65,7 +65,7 @@ import java.util.*;
  *     sections to remain private to the deck object itself.
  * </p>
  */
-public class BaseDeckWatcher {
+public class BaseDeckEventCaller implements IDeckEventCaller {
     
     // Lists of objects listening for events...
     List<ICardDrawnListener> cardDrawnListeners = new ArrayList<>();
@@ -80,7 +80,7 @@ public class BaseDeckWatcher {
     IEventCriticalSection entryCriticalSection;
     IEventCriticalSection exitCriticalSection;
     
-    public BaseDeckWatcher(IEventCriticalSection entrySection, IEventCriticalSection exitSection){
+    public BaseDeckEventCaller(IEventCriticalSection entrySection, IEventCriticalSection exitSection){
         
         // If no callback is supplied for the critical sections, we supply a default
         // method in the form of a lambda that does nothing. This makes later code
@@ -101,18 +101,21 @@ public class BaseDeckWatcher {
     
     
     //==================== Functions for the CardDrawn Event ====================
+    @Override
     public void addCardDrawnListener(ICardDrawnListener listener){
         if( ! cardDrawnListeners.contains(listener) ){
             cardDrawnListeners.add(listener);
         }
     }
     
+    @Override
     public void removeCardDrawnListener(ICardDrawnListener listener){
         if(cardDrawnListeners.contains(listener)){
             cardDrawnListeners.remove(listener);
         }
     }
     
+    @Override
     public void onCardDrawn(IPlayingDeck d){
         if( ! cardDrawnListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();
@@ -122,18 +125,21 @@ public class BaseDeckWatcher {
     }
 
     //==================== Functions for the DiscardDrawn Event ====================
+    @Override
     public void addDiscardDrawnListener(IDiscardDrawnListener listener){
         if( ! discardDrawnListeners.contains(listener) ){
             discardDrawnListeners.add(listener);
         }
     }
 
+    @Override
     public void removeDiscardDrawnListener(IDiscardDrawnListener listener){
         if(discardDrawnListeners.contains(listener)){
             discardDrawnListeners.remove(listener);
         }
     }
 
+    @Override
     public void onDiscardDrawn(IPlayingDeck d){
         if( ! discardDrawnListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();
@@ -144,18 +150,21 @@ public class BaseDeckWatcher {
     
     
     //==================== Functions for the CardDiscarded Event ====================
+    @Override
     public void addCardDiscardedListener(ICardDiscardedListener listener){
         if( ! cardDiscardedListeners.contains(listener) ){
             cardDiscardedListeners.add(listener);
         }
     }
 
+    @Override
     public void removeCardDiscardedListener(ICardDiscardedListener listener){
         if(cardDiscardedListeners.contains(listener)){
             cardDiscardedListeners.remove(listener);
         }
     }
 
+    @Override
     public void onCardDiscarded(IPlayingDeck d){
         if( ! cardDiscardedListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();
@@ -165,18 +174,21 @@ public class BaseDeckWatcher {
     }
 
     //==================== Functions for the Deck Shuffled Event ====================
+    @Override
     public void addDeckShuffledListener(IDeckShuffledListener listener){
         if( ! deckShuffledListeners.contains(listener) ){
             deckShuffledListeners.add(listener);
         }
     }
 
+    @Override
     public void removeDeckShuffledListener(IDeckShuffledListener listener){
         if(deckShuffledListeners.contains(listener)){
             deckShuffledListeners.remove(listener);
         }
     }
 
+    @Override
     public void onDeckShuffled(IPlayingDeck d){
         if( ! deckShuffledListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();
@@ -186,18 +198,21 @@ public class BaseDeckWatcher {
     }
 
     //==================== Functions for the Invalid Discard Event ====================
+    @Override
     public void addInvalidDiscardListener(IInvalidDiscardListener listener){
         if( ! invalidDiscardListeners.contains(listener) ){
             invalidDiscardListeners.add(listener);
         }
     }
 
+    @Override
     public void removeInvalidDiscardListener(IInvalidDiscardListener listener){
         if(invalidDiscardListeners.contains(listener)){
             invalidDiscardListeners.remove(listener);
         }
     }
 
+    @Override
     public void onInvalidDiscard(IPlayingDeck d){
         if( ! invalidDiscardListeners.isEmpty() ){
             this.entryCriticalSection.criticalSection();

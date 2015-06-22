@@ -17,7 +17,8 @@ public interface IPlayingDeck {
     Suits viewDiscardSuit();
 
     
-    // Methods to look at the size of the various parts of the deck.
+    // Methods to look at the size of the various parts of the deck,
+    // and validate outstanding card objects.
     
     int drawPileSize();
     
@@ -26,6 +27,8 @@ public interface IPlayingDeck {
     int outstandingSize();
     
     int totalSize();
+    
+    boolean validateOutstandingCard(IPlayingCard c);
     
     
     // Methods for drawing and discarding

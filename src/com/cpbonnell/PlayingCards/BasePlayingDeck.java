@@ -1,11 +1,59 @@
 package com.cpbonnell.PlayingCards;
 
-import com.cpbonnell.PlayingCards.DeckEvents.ICardDrawnListener;
-
 import java.util.*;
 
 /**
  * Workhorse class, providing most of the functionality of the package.
+ * <p>
+ *     The BasePlayingDeck provides functionality for any application that
+ *     needs to have basic playing card functionality. It maintains a set
+ *     of distinct cards, with duplicate values allowed. The deck then
+ *     allows cards to be drawn from a randomized, face-down draw pile,
+ *     discarded to an ordered face-up discard pile, and drawn again
+ *     from the discard pile in the order which they were discarded. Each
+ *     of these actions raises an event, which allows objects to monitor
+ *     not only the state of the deck, but also the actions of other objects
+ *     on the deck.
+ * </p>
+ * <p>
+ *     Since the base functionality by itself already amounts to a large code
+ *     file, I decided to delegate the responsibility of managing event
+ *     handlers to another class. This has the additional advantage of allowing
+ *     me to later switch the method of event handling with little or no change
+ *     needed to this file... for example switching from a one-interface-per-
+ *     event model with classes registering themselves with the event registrat,
+ *     and expose a single named event handler, to a single-interface-for-all-
+ *     events model, in which objects register their methods with the registrar
+ *     through function references, and may supply more than one handler for 
+ *     each method.
+ * </p>
+ * <p>
+ *     The BasePlayingDeck class simulates the behavior of a physical playing
+ *     deck (namely, the uniqueness of cards) by keeping an internal set of
+ *     BasePlayingCard objects that determine the values present in the deck.
+ *     When a card is "drawn" a new object of type SecurePlayingCard is
+ *     created, with an internal reference pointing to one of the
+ *     BasePlayingCard objects internal to the deck. This SecurePlayingCard
+ *     has no values stored internally, but implements the IPlayingCard
+ *     interface by mirroring the values of the playing card it points to.
+ * </p>
+ * <p>
+ *     The external user of the card has unique access to the values of that
+ *     BasePlayingCard, but when the issued SecurePlayingCard is returned using
+ *     the discardCard method, the deck uses the extra methods of the
+ *     SecurePlayingCard that the outside world does not have access to.
+ *     It ensures that the SecurePlayingCard actually does point to a
+ *     BasePlayingCard belonging to the deck. If so, then that BasePlayingCard
+ *     is moved to the structure for the discard pile. Since the object calling
+ *     the discardCard object still has a reference to the SecurePlayingCard, the
+ *     deck cannot un-instantiate the object. So the SecurePlayingCard class
+ *     contains an invalidate() method that severs the link to a BasePlayingCard,
+ *     and causes it to in stead reflect the values of a blank card. This
+ *     allows the deck to ensure that cards remain unique, and that no client
+ *     objects have attempted to "spoof" having a card with values that it did
+ *     not legitimately draw, or retain a card with values that it supposedly
+ *     discarded.
+ * </p>
  */
 class BasePlayingDeck implements IPlayingDeck {
     
@@ -15,8 +63,12 @@ class BasePlayingDeck implements IPlayingDeck {
     // infinite loops where an event handler generates new events.
     private boolean isReadOnly;
     
-    // A deckWatcher object to handle the relations with various event listeners
-    BaseDeckWatcher eventCaller;
+    // Other variables that specify optional deck behaviors
+    private boolean allowDrawFromDiscard;
+    private boolean allowShuffle;
+    
+    // A DeckEventCaller object to handle the relations with various event listeners
+    IDeckEventCaller eventCaller;
     
     // A random number generator for all the shuffling and other randomization that
     // is needed throughout the life of the deck.
@@ -31,10 +83,12 @@ class BasePlayingDeck implements IPlayingDeck {
     private Queue<IPlayingCard> drawPile;
     private Stack<IPlayingCard> discardPile;
     
-    //==================== Constructors ====================
+    //============================== Constructors ==============================
     public BasePlayingDeck(List<IPlayingCard> values){
         
         this.isReadOnly = false;
+        this.allowDrawFromDiscard = true;
+        this.allowShuffle = true;
         
         // Instantiate the random number generator, seeding it based on the
         // current time to keep things from progressing the same way every game.
@@ -50,56 +104,79 @@ class BasePlayingDeck implements IPlayingDeck {
         
         // Instantiate the helper classes, and pass it a reference to the the
         // lock and unlock functions.
-        this.eventCaller = new BaseDeckWatcher(this::lock, this::unlock);
-        
-        
-        
-        
+        this.eventCaller = new BaseDeckEventCaller(this::lock, this::unlock);
     }
 
     /**
-     * Shuffles the whole discard pile back into the deck.
+     * Static method to construct a standard 52 card French deck.
+     * @return An object implementing IPlayingCard.
      */
-    @Override
-    public void shuffle(){
-        this.shuffle(0);
+    public static IPlayingDeck newStandardFrenchDeck(){
+        
+        // Make a list to hold the card values
+        List<IPlayingCard> cards = new ArrayList<>();
+        
+        // Populate the list with the appropriate values
+        for(Suits s: Suits.values()){
+            for(Ranks r: Ranks.values()){
+                cards.add(new BasePlayingCard(r, s));
+            }
+        }
+        
+        
+        // Construct the deck object
+        BasePlayingDeck deck = new BasePlayingDeck(cards);
+        
+        // Set the default values
+        deck.allowShuffle = true;
+        deck.allowDrawFromDiscard = true;
+        
+        // Return the deck object
+        return deck;
     }
 
     /**
-     * Shuffles the discard pile back into the deck, leaving some.
-     * <p>
-     *     This function randomizes the cards in the discard pile, and places
-     *     them at the bottom of the deck. A specified number are left at the
-     *     top of the discard pile, and not randomized or moved back into the
-     *     deck. If the number of cards specified is greater than the total
-     *     number of cards in the discard pile, then no cards are moved to
-     *     the deck.
-     * </p>
-     * @param leaveTopDiscards The number of cards to leave on top of the discard pile.
+     * Static method to construct a standard 48 card Pinochle deck.
+     * @return An object implementing IPlayingCard.
      */
-    @Override
-    public void shuffle(int leaveTopDiscards){
+    public static IPlayingDeck newPinochleDeck(){
+
+        // Make a list to hold the card values
+        List<IPlayingCard> cards = new ArrayList<>();
+
+        // Populate the list with the appropriate values
+        Ranks[] desiredRanks = {Ranks.ACE, Ranks.KING, Ranks.QUEEN, Ranks.JACK, Ranks.TEN, Ranks.NINE};
         
-        // Pull remaining cards from the discard pile at random and place them in the
-        // facedown pile.
-        while(this.discardPile.size() > leaveTopDiscards){
-            
-            // NOTE: nextInt returns a number between 0 (inclusive) and i (exclusive), so no -1 is needed
-            // at the end to keep the index in balance
-            
-            // Pick an index at random from the range to be sorted
-            int i = this.rng.nextInt(this.discardPile.size() - leaveTopDiscards);
-            i += leaveTopDiscards;
-            
-            // Place the card corresponding to that index on the bottom of the draw pile,
-            // and remove it from the discard pile
-            IPlayingCard c = this.discardPile.elementAt(i);
-            this.drawPile.add(c);
-            this.discardPile.removeElementAt(i);
-        }// END while
-        
-        // Raise the appropriate event...
-        this.eventCaller.onDeckShuffled(this);
+        for(Suits s: Suits.values()){
+            for(Ranks r: desiredRanks){
+                cards.add(new BasePlayingCard(r, s));
+                cards.add(new BasePlayingCard(r, s));
+            }
+        }
+
+
+        // Construct the deck object
+        BasePlayingDeck deck = new BasePlayingDeck(cards);
+
+        // Set the default values
+        deck.allowShuffle = true;
+        deck.allowDrawFromDiscard = true;
+
+        // Return the deck object
+        return deck;
+    }
+    
+    
+    
+    //============================== Accessors ==============================
+    // Make the event manager and the deck state public
+
+    /**
+     * Get access to the deck manager to register or unregister event listeners.
+     * @return A reference to the Deck's event caller object.
+     */
+    IDeckEventRegistrar getEventManager(){
+        return this.eventCaller;
     }
 
     /**
@@ -164,6 +241,82 @@ class BasePlayingDeck implements IPlayingDeck {
         return this.cardValues.size();
     }
 
+    /**
+     * Determines if the specified IPlayingCard object is a valid outstanding card from this deck.
+     * @param c An objectimplementing IPlayingCard whose authenticity is in question.
+     * @return true if the card is a valid outstanding card, false if it is not.
+     */
+    @Override
+    public boolean validateOutstandingCard(IPlayingCard c){
+        
+        // Make sure that the parameter is of the proper class
+        if(c.getClass() != SecurePlayingCard.class){
+            return false;
+        }
+        
+        //Cast the parameter to a concrete type to get the additional functionality
+        SecurePlayingCard s = (SecurePlayingCard) c;
+        
+        // Scan through the BasePlayingCards in the list of outstanding cards, and
+        // if the item is found, return true. Otherwise, return false.
+         return this.outstandingCards.stream().anyMatch( s::pointsAt );
+    }
+
+    //============================== Action Methods ==============================
+    // Methods that change the state of the deck. All of these raise events,
+    // and are available only when the deck is NOT locked. 
+    
+    /**
+     * Shuffles the discard pile back into the deck, leaving some.
+     * <p>
+     *     This function randomizes the cards in the discard pile, and places
+     *     them at the bottom of the deck. A specified number are left at the
+     *     top of the discard pile, and not randomized or moved back into the
+     *     deck. If the number of cards specified is greater than the total
+     *     number of cards in the discard pile, then no cards are moved to
+     *     the deck.
+     * </p>
+     * @param leaveTopDiscards The number of cards to leave on top of the discard pile.
+     */
+    @Override
+    public void shuffle(int leaveTopDiscards){
+        
+        // Exit immediately if the deck is in read-only mode, or if shuffling is not allowed
+        if(this.isReadOnly || ! this.allowShuffle ){
+            return;
+        }
+        
+        // Pull remaining cards from the discard pile at random and place them in the
+        // facedown pile.
+        while(this.discardPile.size() > leaveTopDiscards){
+            
+            // NOTE: nextInt returns a number between 0 (inclusive) and i (exclusive), so no -1 is needed
+            // at the end to keep the index in balance
+            
+            // Pick an index at random from the range to be sorted
+            int i = this.rng.nextInt(this.discardPile.size() - leaveTopDiscards);
+            i += leaveTopDiscards;
+            
+            // Place the card corresponding to that index on the bottom of the draw pile,
+            // and remove it from the discard pile
+            IPlayingCard c = this.discardPile.elementAt(i);
+            this.drawPile.add(c);
+            this.discardPile.removeElementAt(i);
+        }// END while
+        
+        // Raise the appropriate event...
+        this.eventCaller.onDeckShuffled(this);
+    }
+
+    /**
+     * Shuffles the whole discard pile back into the deck.
+     */
+    @Override
+    public void shuffle(){
+        this.shuffle(0);
+    }
+
+    
 
     /**
      * Issues a card from the dop of the draw pile.
@@ -178,6 +331,11 @@ class BasePlayingDeck implements IPlayingDeck {
      */
     @Override
     public IPlayingCard drawCard() {
+
+        // Exit immediately if the deck is in read-only mode.
+        if(this.isReadOnly){
+            return null;
+        }
         
         // Handle cases where there are no cards left in the draw pile
         if(this.drawPile.isEmpty()){
@@ -210,11 +368,32 @@ class BasePlayingDeck implements IPlayingDeck {
 
     @Override
     public IPlayingCard drawDiscard() {
-        return null;
+
+        // Exit immediately if the deck is in read-only mode, or if drawing from the
+        // discard pile is not enabled, or if there are no cards to be drawn.
+        if(this.isReadOnly || ! this.allowDrawFromDiscard || this.discardPile.isEmpty()){
+            return null;
+        }
+        
+        // Pull the top card off the discard pile, and create a facade wrapper around it
+        IPlayingCard actual = this.discardPile.pop();
+        IPlayingCard facade = new SecurePlayingCard(actual);
+        
+        // Put the actual card into the list of outstanding cards
+        this.outstandingCards.add(actual);
+        
+        // Raise the appropriate event, and return the facade
+        this.eventCaller.onDiscardDrawn(this);
+        return facade;
     }
 
     @Override
     public boolean discardCard(IPlayingCard c) {
+
+        // Exit immediately if the deck is in read-only mode.
+        if(this.isReadOnly){
+            return false;
+        }
         
         // First make sure that the parameter is a valid card facade object...
         if(c.getClass() != SecurePlayingCard.class){
