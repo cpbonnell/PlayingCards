@@ -1,6 +1,7 @@
 package com.cpbonnell.PlayingCards;
 
 import com.cpbonnell.PlayingCards.DeckEvents.*;
+import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 
@@ -19,40 +20,21 @@ import java.util.*;
  * <p>
  *     The event architecture is designed around a set of interfaces, each of
  *     which represents a single event. Any class wishing to respond to one
- *     of those events needs only to implement the interface and register
- *     itself through the appropriate addXxxxListener method, and unregister
- *     with the corresponding removeXxxxListener method. I considered an
- *     alternate implementation which would make use of a single functional
- *     interface for all events, specifying a single function: handler().
- *     Classes wishing to subscribe would then pass a function reference
- *     to the appropriate method with a syntax like
- *     " watcher.addXxxxListener(obj1::xxxxHandler) "
- *     I decided against this implementation for two reasons. The first is
- *     that if a subscribing class has to implement one interface for each
- *     event, then it is easy to look at a given class and see what events
- *     it relies on... and it is easy to make sure that each class supplies
- *     no more than one handler. The second reason is that it makes
- *     un-subscribing more tedious.
+ *     of those events has two options. It may either implement the interface
+ *     for the event is wishes to respond to, and then register itself with
+ *     the corresponding addXxxxListener method, or it may supply a function
+ *     reference to the addXxxxListener method. On a successful registration
+ *     of a new listener, the addXxxxListener method returns a unique code
+ *     which may be supplied to the removeXxxxListener method to unsubscribe.
+ *     An object which registered by supplying a reference to itself (rather
+ *     than a function reference) may also unsubscribe by simply passing a
+ *     reference to itself to the removeXxxxListener method, without needing
+ *     to keep a copy of the unique ID from addXxxxListener. Objects that
+ *     register with a function reference must use the unique ID in order
+ *     to successfully unsubscribe.
  * </p>
  * <p>
- *     I decided against this implementation for two reasons. The first is
- *     that if a subscribing class has to implement one interface for each
- *     event, then it is easy to look at a given class and see what events
- *     it relies on... and it is easy to make sure that each class supplies
- *     no more than one handler. The second reason is that the way Java
- *     uses function references makes unsubscribing rather difficult. 
- *     What the addXxxxListener method sees internally with a function
- *     reference call is a newly generated lambda object that contains
- *     a reference to the specified function. Passing the same function
- *     to the same method a second time results in a seperate object, with
- *     a seperate hash code... so the parent function cannot unsubscribe
- *     unless the addXxxxHandler method returns the hash code of the
- *     newly generated lambda object to the calling parent object, which
- *     the parent object must save and pass in turn to the removeXxxxHandler
- *     method in order to unsubscribe.
- * </p>
- * <p>
- *     I did decide to use function references for another purpose. The 
+ *     I did decide to use function references only for the parent object. The 
  *     deck object needs to make sure that it locks itself as read-only before
  *     calling any events, and unlock after the event call. Rather than make
  *     the deck object do this every time it wishes to raise an event, it is
@@ -74,9 +56,6 @@ public class BaseDeckEventCaller implements IDeckEventCaller {
     List<IDeckShuffledListener> deckShuffledListeners = new ArrayList<>();
     List<IInvalidDiscardListener> invalidDiscardListeners = new ArrayList<>();
     
-    
-    String preEvent;
-    String postEvent;
     IEventCriticalSection entryCriticalSection;
     IEventCriticalSection exitCriticalSection;
     
@@ -102,19 +81,30 @@ public class BaseDeckEventCaller implements IDeckEventCaller {
     
     //==================== Functions for the CardDrawn Event ====================
     @Override
-    public void addCardDrawnListener(ICardDrawnListener listener){
+    public int addCardDrawnListener(ICardDrawnListener listener){
+        
         if( ! cardDrawnListeners.contains(listener) ){
             cardDrawnListeners.add(listener);
+            return listener.hashCode();
         }
+        return -1;
     }
     
     @Override
-    public void removeCardDrawnListener(ICardDrawnListener listener){
-        if(cardDrawnListeners.contains(listener)){
-            cardDrawnListeners.remove(listener);
-        }
+    public boolean removeCardDrawnListener(ICardDrawnListener listener){
+        return this.cardDrawnListeners.remove(listener);
     }
-    
+
+    @Override
+    public boolean removeCardDrawnListener(int listenerHash) {
+        // Find the specified object
+        ICardDrawnListener obj = this.cardDrawnListeners.stream().
+                filter(o -> o.hashCode() == listenerHash).findFirst().get();
+        
+        // Remove the object from the collection, if it was found
+        return this.cardDrawnListeners.remove(obj);
+    }
+
     @Override
     public void onCardDrawn(IPlayingDeck d){
         if( ! cardDrawnListeners.isEmpty() ){
@@ -126,17 +116,27 @@ public class BaseDeckEventCaller implements IDeckEventCaller {
 
     //==================== Functions for the DiscardDrawn Event ====================
     @Override
-    public void addDiscardDrawnListener(IDiscardDrawnListener listener){
+    public int addDiscardDrawnListener(IDiscardDrawnListener listener){
         if( ! discardDrawnListeners.contains(listener) ){
             discardDrawnListeners.add(listener);
+            return listener.hashCode();
         }
+        return -1;
     }
 
     @Override
-    public void removeDiscardDrawnListener(IDiscardDrawnListener listener){
-        if(discardDrawnListeners.contains(listener)){
-            discardDrawnListeners.remove(listener);
-        }
+    public boolean removeDiscardDrawnListener(IDiscardDrawnListener listener){
+        return this.discardDrawnListeners.remove(listener);
+    }
+
+    @Override
+    public boolean removeDiscardDrawnListener(int listenerHash) {
+        // Find the specified object
+        IDiscardDrawnListener obj = this.discardDrawnListeners.stream().
+                filter(o -> o.hashCode() == listenerHash).findFirst().get();
+        
+        // Remove the object from the collection
+        return this.discardDrawnListeners.remove(obj);
     }
 
     @Override
@@ -151,17 +151,27 @@ public class BaseDeckEventCaller implements IDeckEventCaller {
     
     //==================== Functions for the CardDiscarded Event ====================
     @Override
-    public void addCardDiscardedListener(ICardDiscardedListener listener){
+    public int addCardDiscardedListener(ICardDiscardedListener listener){
         if( ! cardDiscardedListeners.contains(listener) ){
             cardDiscardedListeners.add(listener);
+            return listener.hashCode();
         }
+        return -1;
     }
 
     @Override
-    public void removeCardDiscardedListener(ICardDiscardedListener listener){
-        if(cardDiscardedListeners.contains(listener)){
-            cardDiscardedListeners.remove(listener);
-        }
+    public boolean removeCardDiscardedListener(ICardDiscardedListener listener){
+        return this.cardDiscardedListeners.remove(listener);
+    }
+
+    @Override
+    public boolean removeCardDiscardedListener(int listenerHash) {
+        // Find the specified object
+        ICardDiscardedListener obj = this.cardDiscardedListeners.stream().
+                filter(o -> o.hashCode() == listenerHash).findFirst().get();
+
+        // Remove the object from the collection
+        return this.cardDiscardedListeners.remove(obj);
     }
 
     @Override
@@ -175,17 +185,27 @@ public class BaseDeckEventCaller implements IDeckEventCaller {
 
     //==================== Functions for the Deck Shuffled Event ====================
     @Override
-    public void addDeckShuffledListener(IDeckShuffledListener listener){
+    public int addDeckShuffledListener(IDeckShuffledListener listener){
         if( ! deckShuffledListeners.contains(listener) ){
             deckShuffledListeners.add(listener);
+            return listener.hashCode();
         }
+        return -1;
     }
 
     @Override
-    public void removeDeckShuffledListener(IDeckShuffledListener listener){
-        if(deckShuffledListeners.contains(listener)){
-            deckShuffledListeners.remove(listener);
-        }
+    public boolean removeDeckShuffledListener(IDeckShuffledListener listener){
+        return this.deckShuffledListeners.remove(listener);
+    }
+
+    @Override
+    public boolean removeDeckShuffledListener(int listenerHash) {
+        // Find the specified object
+        IDeckShuffledListener obj = this.deckShuffledListeners.stream().
+                filter(o -> o.hashCode() == listenerHash).findFirst().get();
+
+        // Remove the object from the collection
+        return this.deckShuffledListeners.remove(obj);
     }
 
     @Override
@@ -199,17 +219,27 @@ public class BaseDeckEventCaller implements IDeckEventCaller {
 
     //==================== Functions for the Invalid Discard Event ====================
     @Override
-    public void addInvalidDiscardListener(IInvalidDiscardListener listener){
+    public int addInvalidDiscardListener(IInvalidDiscardListener listener){
         if( ! invalidDiscardListeners.contains(listener) ){
             invalidDiscardListeners.add(listener);
+            return listener.hashCode();
         }
+        return -1;
     }
 
     @Override
-    public void removeInvalidDiscardListener(IInvalidDiscardListener listener){
-        if(invalidDiscardListeners.contains(listener)){
-            invalidDiscardListeners.remove(listener);
-        }
+    public boolean removeInvalidDiscardListener(IInvalidDiscardListener listener){
+        return this.invalidDiscardListeners.remove(listener);
+    }
+
+    @Override
+    public boolean removeInvalidDiscardListener(int listenerHash) {
+        // Find the specified object
+        IInvalidDiscardListener obj = this.invalidDiscardListeners.stream().
+                filter(o -> o.hashCode() == listenerHash).findFirst().get();
+
+        // Remove the object from the collection
+        return this.invalidDiscardListeners.remove(obj);
     }
 
     @Override
