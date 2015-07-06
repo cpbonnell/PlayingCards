@@ -14,32 +14,32 @@ import com.cpbonnell.PlayingCards.DeckEvents.*;
  */
 public interface IDeckEventRegistrar {
     //==================== Functions for the CardDrawn Event ====================
-    int addCardDrawnListener(ICardDrawnListener listener);
+    int addCardDrawnListener(IDeckEventListener listener);
 
-    boolean removeCardDrawnListener(ICardDrawnListener listener);
+    //boolean removeCardDrawnListener(ICardDrawnListener listener);
     boolean removeCardDrawnListener(int listenerHash);
 
     //==================== Functions for the DiscardDrawn Event ====================
-    int addDiscardDrawnListener(IDiscardDrawnListener listener);
+    int addDiscardDrawnListener(IDeckEventListener listener);
 
-    boolean removeDiscardDrawnListener(IDiscardDrawnListener listener);
+    //boolean removeDiscardDrawnListener(IDiscardDrawnListener listener);
     boolean removeDiscardDrawnListener(int listenerHash);
 
     //==================== Functions for the CardDiscarded Event ====================
-    int addCardDiscardedListener(ICardDiscardedListener listener);
+    int addCardDiscardedListener(IDeckEventListener listener);
 
-    boolean removeCardDiscardedListener(ICardDiscardedListener listener);
+    //boolean removeCardDiscardedListener(ICardDiscardedListener listener);
     boolean removeCardDiscardedListener(int listenerHash);
 
     //==================== Functions for the Deck Shuffled Event ====================
-    int addDeckShuffledListener(IDeckShuffledListener listener);
+    int addDeckShuffledListener(IDeckEventListener listener);
 
-    boolean removeDeckShuffledListener(IDeckShuffledListener listener);
+    //boolean removeDeckShuffledListener(IDeckShuffledListener listener);
     boolean removeDeckShuffledListener(int listenerHash);
 
     //==================== Functions for the Invalid Discard Event ====================
-    int addInvalidDiscardListener(IInvalidDiscardListener listener);
+    int addInvalidDiscardListener(IDeckEventListener listener);
 
-    boolean removeInvalidDiscardListener(IInvalidDiscardListener listener);
+    //boolean removeInvalidDiscardListener(IInvalidDiscardListener listener);
     boolean removeInvalidDiscardListener(int listenerHash);
 }

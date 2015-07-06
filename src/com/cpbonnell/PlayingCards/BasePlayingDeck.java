@@ -16,18 +16,6 @@ import java.util.*;
  *     on the deck.
  * </p>
  * <p>
- *     Since the base functionality by itself already amounts to a large code
- *     file, I decided to delegate the responsibility of managing event
- *     handlers to another class. This has the additional advantage of allowing
- *     me to later switch the method of event handling with little or no change
- *     needed to this file... for example switching from a one-interface-per-
- *     event model with classes registering themselves with the event registrat,
- *     and expose a single named event handler, to a single-interface-for-all-
- *     events model, in which objects register their methods with the registrar
- *     through function references, and may supply more than one handler for 
- *     each method.
- * </p>
- * <p>
  *     The BasePlayingDeck class simulates the behavior of a physical playing
  *     deck (namely, the uniqueness of cards) by keeping an internal set of
  *     BasePlayingCard objects that determine the values present in the deck.
@@ -36,23 +24,6 @@ import java.util.*;
  *     BasePlayingCard objects internal to the deck. This SecurePlayingCard
  *     has no values stored internally, but implements the IPlayingCard
  *     interface by mirroring the values of the playing card it points to.
- * </p>
- * <p>
- *     The external user of the card has unique access to the values of that
- *     BasePlayingCard, but when the issued SecurePlayingCard is returned using
- *     the discardCard method, the deck uses the extra methods of the
- *     SecurePlayingCard that the outside world does not have access to.
- *     It ensures that the SecurePlayingCard actually does point to a
- *     BasePlayingCard belonging to the deck. If so, then that BasePlayingCard
- *     is moved to the structure for the discard pile. Since the object calling
- *     the discardCard object still has a reference to the SecurePlayingCard, the
- *     deck cannot un-instantiate the object. So the SecurePlayingCard class
- *     contains an invalidate() method that severs the link to a BasePlayingCard,
- *     and causes it to in stead reflect the values of a blank card. This
- *     allows the deck to ensure that cards remain unique, and that no client
- *     objects have attempted to "spoof" having a card with values that it did
- *     not legitimately draw, or retain a card with values that it supposedly
- *     discarded.
  * </p>
  */
 public class BasePlayingDeck implements IPlayingDeck {
