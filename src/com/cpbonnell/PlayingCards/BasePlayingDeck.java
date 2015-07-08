@@ -409,12 +409,14 @@ public class BasePlayingDeck implements IPlayingDeck {
     //==================== Private Helper Functions ====================
 
     
-    private void lock() {
+    private int lock() {
         this.isReadOnly = true;
+        return 1;
     }
     
-    private void unlock() {
+    private int unlock() {
         this.isReadOnly = false;
+        return 1;
     }
     
 }

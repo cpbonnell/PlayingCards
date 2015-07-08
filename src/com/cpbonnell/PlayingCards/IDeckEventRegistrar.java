@@ -1,6 +1,7 @@
 package com.cpbonnell.PlayingCards;
 
-import com.cpbonnell.PlayingCards.DeckEvents.*;
+
+import java.util.function.Consumer;
 
 /**
  * Public interface for subscribing and unsubscribing to deck events.
@@ -14,32 +15,27 @@ import com.cpbonnell.PlayingCards.DeckEvents.*;
  */
 public interface IDeckEventRegistrar {
     //==================== Functions for the CardDrawn Event ====================
-    int addCardDrawnListener(IDeckEventListener listener);
-
-    //boolean removeCardDrawnListener(ICardDrawnListener listener);
+    int addCardDrawnListener(Consumer<IPlayingDeck> listener);
+    
     boolean removeCardDrawnListener(int listenerHash);
 
     //==================== Functions for the DiscardDrawn Event ====================
-    int addDiscardDrawnListener(IDeckEventListener listener);
-
-    //boolean removeDiscardDrawnListener(IDiscardDrawnListener listener);
+    int addDiscardDrawnListener(Consumer<IPlayingDeck> listener);
+    
     boolean removeDiscardDrawnListener(int listenerHash);
 
     //==================== Functions for the CardDiscarded Event ====================
-    int addCardDiscardedListener(IDeckEventListener listener);
-
-    //boolean removeCardDiscardedListener(ICardDiscardedListener listener);
+    int addCardDiscardedListener(Consumer<IPlayingDeck> listener);
+    
     boolean removeCardDiscardedListener(int listenerHash);
 
     //==================== Functions for the Deck Shuffled Event ====================
-    int addDeckShuffledListener(IDeckEventListener listener);
-
-    //boolean removeDeckShuffledListener(IDeckShuffledListener listener);
+    int addDeckShuffledListener(Consumer<IPlayingDeck> listener);
+    
     boolean removeDeckShuffledListener(int listenerHash);
 
     //==================== Functions for the Invalid Discard Event ====================
-    int addInvalidDiscardListener(IDeckEventListener listener);
-
-    //boolean removeInvalidDiscardListener(IInvalidDiscardListener listener);
+    int addInvalidDiscardListener(Consumer<IPlayingDeck> listener);
+    
     boolean removeInvalidDiscardListener(int listenerHash);
 }

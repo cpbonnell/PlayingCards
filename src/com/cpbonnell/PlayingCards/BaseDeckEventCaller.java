@@ -1,5 +1,8 @@
 package com.cpbonnell.PlayingCards;
 
+import java.util.function.IntSupplier;
+import java.util.function.Consumer;
+
 import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
@@ -20,29 +23,29 @@ import java.util.*;
 class BaseDeckEventCaller implements IDeckEventCaller {
     
     // Lists of objects listening for events...
-    List<IDeckEventListener> cardDrawnListeners = new ArrayList<>();
-    List<IDeckEventListener> discardDrawnListeners = new ArrayList<>();
-    List<IDeckEventListener> cardDiscardedListeners = new ArrayList<>();
-    List<IDeckEventListener> deckShuffledListeners = new ArrayList<>();
-    List<IDeckEventListener> invalidDiscardListeners = new ArrayList<>();
+    List<Consumer<IPlayingDeck>> cardDrawnListeners = new ArrayList<>();
+    List<Consumer<IPlayingDeck>> discardDrawnListeners = new ArrayList<>();
+    List<Consumer<IPlayingDeck>> cardDiscardedListeners = new ArrayList<>();
+    List<Consumer<IPlayingDeck>> deckShuffledListeners = new ArrayList<>();
+    List<Consumer<IPlayingDeck>> invalidDiscardListeners = new ArrayList<>();
     
-    IEventCriticalSection entryCriticalSection;
-    IEventCriticalSection exitCriticalSection;
+    IntSupplier entryCriticalSection;
+    IntSupplier exitCriticalSection;
     
-    public BaseDeckEventCaller(IEventCriticalSection entrySection, IEventCriticalSection exitSection){
+    public BaseDeckEventCaller(IntSupplier entrySection, IntSupplier exitSection){
         
         // If no callback is supplied for the critical sections, we supply a default
         // method in the form of a lambda that does nothing. This makes later code
         // much simpler, since it can call the entry section and exit section
         // wiothout having to first check for null values.
         if(entrySection == null){
-            this.entryCriticalSection = () -> {return;};
+            this.entryCriticalSection = () -> {return 1;};
         } else {
             this.entryCriticalSection = entrySection;
         }
         
         if(exitSection == null){
-            this.exitCriticalSection = () ->{return;};
+            this.exitCriticalSection = () ->{return 1;};
         } else {
             this.exitCriticalSection = exitSection;
         }
@@ -51,7 +54,7 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     
     //==================== Functions for the CardDrawn Event ====================
     @Override
-    public int addCardDrawnListener(IDeckEventListener listener){
+    public int addCardDrawnListener(Consumer<IPlayingDeck> listener){
         
         if( ! cardDrawnListeners.contains(listener) ){
             cardDrawnListeners.add(listener);
@@ -63,7 +66,7 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public boolean removeCardDrawnListener(int listenerHash) {
         // Find the specified object
-        IDeckEventListener obj = this.cardDrawnListeners.stream().
+        Consumer<IPlayingDeck> obj = this.cardDrawnListeners.stream().
                 filter(o -> o.hashCode() == listenerHash).findFirst().get();
         
         // Remove the object from the collection, if it was found
@@ -73,16 +76,16 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public void onCardDrawn(IPlayingDeck d){
         if( ! cardDrawnListeners.isEmpty() ){
-            this.entryCriticalSection.criticalSection();
-            cardDrawnListeners.stream().forEach(o -> o.deckEventHandler(d));
-            this.exitCriticalSection.criticalSection();
+            this.entryCriticalSection.getAsInt();
+            cardDrawnListeners.stream().forEach(o -> o.accept(d));
+            this.exitCriticalSection.getAsInt();
         }
     }
 
     
     //==================== Functions for the DiscardDrawn Event ====================
     @Override
-    public int addDiscardDrawnListener(IDeckEventListener listener){
+    public int addDiscardDrawnListener(Consumer<IPlayingDeck> listener){
         if( ! discardDrawnListeners.contains(listener) ){
             discardDrawnListeners.add(listener);
             return listener.hashCode();
@@ -93,7 +96,7 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public boolean removeDiscardDrawnListener(int listenerHash) {
         // Find the specified object
-        IDeckEventListener obj = this.discardDrawnListeners.stream().
+        Consumer<IPlayingDeck> obj = this.discardDrawnListeners.stream().
                 filter(o -> o.hashCode() == listenerHash).findFirst().get();
         
         // Remove the object from the collection
@@ -103,16 +106,16 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public void onDiscardDrawn(IPlayingDeck d){
         if( ! discardDrawnListeners.isEmpty() ){
-            this.entryCriticalSection.criticalSection();
-            discardDrawnListeners.stream().forEach(o -> o.deckEventHandler(d));
-            this.exitCriticalSection.criticalSection();
+            this.entryCriticalSection.getAsInt();
+            discardDrawnListeners.stream().forEach(o -> o.accept(d));
+            this.exitCriticalSection.getAsInt();
         }
     }
     
     
     //==================== Functions for the CardDiscarded Event ====================
     @Override
-    public int addCardDiscardedListener(IDeckEventListener listener){
+    public int addCardDiscardedListener(Consumer<IPlayingDeck> listener){
         if( ! cardDiscardedListeners.contains(listener) ){
             cardDiscardedListeners.add(listener);
             return listener.hashCode();
@@ -124,7 +127,7 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public boolean removeCardDiscardedListener(int listenerHash) {
         // Find the specified object
-        IDeckEventListener obj = this.cardDiscardedListeners.stream().
+        Consumer<IPlayingDeck> obj = this.cardDiscardedListeners.stream().
                 filter(o -> o.hashCode() == listenerHash).findFirst().get();
 
         // Remove the object from the collection
@@ -134,15 +137,15 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public void onCardDiscarded(IPlayingDeck d){
         if( ! cardDiscardedListeners.isEmpty() ){
-            this.entryCriticalSection.criticalSection();
-            cardDiscardedListeners.stream().forEach(o -> o.deckEventHandler(d));
-            this.exitCriticalSection.criticalSection();
+            this.entryCriticalSection.getAsInt();
+            cardDiscardedListeners.stream().forEach(o -> o.accept(d));
+            this.exitCriticalSection.getAsInt();
         }
     }
 
     //==================== Functions for the Deck Shuffled Event ====================
     @Override
-    public int addDeckShuffledListener(IDeckEventListener listener){
+    public int addDeckShuffledListener(Consumer<IPlayingDeck> listener){
         if( ! deckShuffledListeners.contains(listener) ){
             deckShuffledListeners.add(listener);
             return listener.hashCode();
@@ -154,7 +157,7 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public boolean removeDeckShuffledListener(int listenerHash) {
         // Find the specified object
-        IDeckEventListener obj = this.deckShuffledListeners.stream().
+        Consumer<IPlayingDeck> obj = this.deckShuffledListeners.stream().
                 filter(o -> o.hashCode() == listenerHash).findFirst().get();
 
         // Remove the object from the collection
@@ -164,15 +167,15 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public void onDeckShuffled(IPlayingDeck d){
         if( ! deckShuffledListeners.isEmpty() ){
-            this.entryCriticalSection.criticalSection();
-            deckShuffledListeners.stream().forEach(o -> o.deckEventHandler(d));
-            this.exitCriticalSection.criticalSection();
+            this.entryCriticalSection.getAsInt();
+            deckShuffledListeners.stream().forEach(o -> o.accept(d));
+            this.exitCriticalSection.getAsInt();
         }
     }
 
     //==================== Functions for the Invalid Discard Event ====================
     @Override
-    public int addInvalidDiscardListener(IDeckEventListener listener){
+    public int addInvalidDiscardListener(Consumer<IPlayingDeck> listener){
         if( ! invalidDiscardListeners.contains(listener) ){
             invalidDiscardListeners.add(listener);
             return listener.hashCode();
@@ -184,7 +187,7 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public boolean removeInvalidDiscardListener(int listenerHash) {
         // Find the specified object
-        IDeckEventListener obj = this.invalidDiscardListeners.stream().
+        Consumer<IPlayingDeck> obj = this.invalidDiscardListeners.stream().
                 filter(o -> o.hashCode() == listenerHash).findFirst().get();
 
         // Remove the object from the collection
@@ -194,9 +197,9 @@ class BaseDeckEventCaller implements IDeckEventCaller {
     @Override
     public void onInvalidDiscard(IPlayingDeck d){
         if( ! invalidDiscardListeners.isEmpty() ){
-            this.entryCriticalSection.criticalSection();
-            invalidDiscardListeners.stream().forEach(o -> o.deckEventHandler(d));
-            this.exitCriticalSection.criticalSection();
+            this.entryCriticalSection.getAsInt();
+            invalidDiscardListeners.stream().forEach(o -> o.accept(d));
+            this.exitCriticalSection.getAsInt();
         }
     }
     
