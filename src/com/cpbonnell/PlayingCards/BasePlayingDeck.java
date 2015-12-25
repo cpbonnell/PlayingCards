@@ -18,10 +18,10 @@ import java.util.*;
  * <p>
  *     The BasePlayingDeck class simulates the behavior of a physical playing
  *     deck (namely, the uniqueness of cards) by keeping an internal set of
- *     BasePlayingCard objects that determine the values present in the deck.
+ *     PlayingCard objects that determine the values present in the deck.
  *     When a card is "drawn" a new object of type SecurePlayingCard is
  *     created, with an internal reference pointing to one of the
- *     BasePlayingCard objects internal to the deck. This SecurePlayingCard
+ *     PlayingCard objects internal to the deck. This SecurePlayingCard
  *     has no values stored internally, but implements the IPlayingCard
  *     interface by mirroring the values of the playing card it points to.
  * </p>
@@ -90,7 +90,7 @@ public class BasePlayingDeck implements IPlayingDeck {
         // Populate the list with the appropriate values
         for(Suits s: Suits.values()){
             for(Ranks r: Ranks.values()){
-                cards.add(new BasePlayingCard(r, s));
+                cards.add(new PlayingCard(r, s));
             }
         }
         
@@ -121,8 +121,8 @@ public class BasePlayingDeck implements IPlayingDeck {
         
         for(Suits s: Suits.values()){
             for(Ranks r: desiredRanks){
-                cards.add(new BasePlayingCard(r, s));
-                cards.add(new BasePlayingCard(r, s));
+                cards.add(new PlayingCard(r, s));
+                cards.add(new PlayingCard(r, s));
             }
         }
 

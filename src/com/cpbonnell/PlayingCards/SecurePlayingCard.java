@@ -18,7 +18,7 @@ package com.cpbonnell.PlayingCards;
  */
 class SecurePlayingCard implements IPlayingCard {
     
-    private static final IPlayingCard BLANK_CARD = new BasePlayingCard(null, null);
+    private static final IPlayingCard BLANK_CARD = new PlayingCard(null, null);
     private IPlayingCard referencedCard;
 
     /**
@@ -56,6 +56,11 @@ class SecurePlayingCard implements IPlayingCard {
     @Override
     public boolean matches(IPlayingCard c) {
         return this.referencedCard.matches(c);
+    }
+
+    @Override
+    public String toChars() {
+        return this.referencedCard.toChars();
     }
 
     /**

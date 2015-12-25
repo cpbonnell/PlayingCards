@@ -23,11 +23,11 @@ import java.util.*;
 class BaseDeckEventCaller implements IDeckEventCaller {
     
     // Lists of objects listening for events...
-    List<Consumer<IPlayingDeck>> cardDrawnListeners = new ArrayList<>();
-    List<Consumer<IPlayingDeck>> discardDrawnListeners = new ArrayList<>();
-    List<Consumer<IPlayingDeck>> cardDiscardedListeners = new ArrayList<>();
-    List<Consumer<IPlayingDeck>> deckShuffledListeners = new ArrayList<>();
-    List<Consumer<IPlayingDeck>> invalidDiscardListeners = new ArrayList<>();
+    List< Consumer<IPlayingDeck> > cardDrawnListeners = new ArrayList<>();
+    List< Consumer<IPlayingDeck> > discardDrawnListeners = new ArrayList<>();
+    List< Consumer<IPlayingDeck> > cardDiscardedListeners = new ArrayList<>();
+    List< Consumer<IPlayingDeck> > deckShuffledListeners = new ArrayList<>();
+    List< Consumer<IPlayingDeck> > invalidDiscardListeners = new ArrayList<>();
     
     IntSupplier entryCriticalSection;
     IntSupplier exitCriticalSection;
@@ -39,13 +39,13 @@ class BaseDeckEventCaller implements IDeckEventCaller {
         // much simpler, since it can call the entry section and exit section
         // wiothout having to first check for null values.
         if(entrySection == null){
-            this.entryCriticalSection = () -> {return 1;};
+            this.entryCriticalSection = () -> 1;
         } else {
             this.entryCriticalSection = entrySection;
         }
         
         if(exitSection == null){
-            this.exitCriticalSection = () ->{return 1;};
+            this.exitCriticalSection = () -> 1;
         } else {
             this.exitCriticalSection = exitSection;
         }

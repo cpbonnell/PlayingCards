@@ -27,4 +27,20 @@ public enum Suits {
                 return false;
         }
     }
+    
+    public String toChars(){
+        String ret = "-";
+        
+        switch(this){
+            case CLUBS: ret = "C";
+                break;
+            case DIAMONDS: ret = "D";
+                break;
+            case HEARTS: ret = "H";
+                break;
+            case SPADES: ret = "S";
+                break;
+        }
+        return ret;
+    }
 }

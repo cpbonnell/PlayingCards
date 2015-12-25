@@ -7,4 +7,5 @@ public interface IPlayingCard {
     public Ranks rank();
     public Suits suit();
     public boolean matches(IPlayingCard c);
+    public String toChars();
 }

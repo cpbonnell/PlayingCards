@@ -6,17 +6,17 @@ import com.sun.javaws.exceptions.InvalidArgumentException;
  * Provides a representation of a basic playing card.
  *
  */
-class BasePlayingCard implements IPlayingCard {
+public class PlayingCard implements IPlayingCard {
 
     private Ranks rank;
     private Suits suit;
 
     /**
-     * Instantiate a BasePlayingCard object with the given values.
+     * Instantiate a PlayingCard object with the given values.
      * @param r A Ranks value
      * @param s A Suits value
      */
-    public BasePlayingCard(Ranks r, Suits s){
+    public PlayingCard(Ranks r, Suits s){
 
         if(r != null && s != null){
             this.rank = r;
@@ -25,8 +25,7 @@ class BasePlayingCard implements IPlayingCard {
             this.rank = null;
             this.suit = null;
         }
-
-        //throw new InvalidArgumentException();
+        
     }
 
     /**
@@ -55,6 +54,11 @@ class BasePlayingCard implements IPlayingCard {
     @Override
     public boolean matches(IPlayingCard c) {
         return this.rank == c.rank() && this.suit == c.suit();
+    }
+
+    @Override
+    public String toChars() {
+        return this.rank.toChars() + this.suit.toChars();
     }
 
 }
