@@ -60,5 +60,9 @@ public class PlayingCard implements IPlayingCard {
     public String toChars() {
         return this.rank.toChars() + this.suit.toChars();
     }
-
+    
+    @Override
+    public int compareTo(final IPlayingCard o) {
+        return this.rank.compareTo(o.rank());
+    }
 }

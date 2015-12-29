@@ -37,7 +37,7 @@ class BaseDeckEventCaller implements IDeckEventCaller {
         // If no callback is supplied for the critical sections, we supply a default
         // method in the form of a lambda that does nothing. This makes later code
         // much simpler, since it can call the entry section and exit section
-        // wiothout having to first check for null values.
+        // without having to first check for null values.
         if(entrySection == null){
             this.entryCriticalSection = () -> 1;
         } else {

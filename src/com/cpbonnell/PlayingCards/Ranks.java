@@ -1,6 +1,8 @@
 package com.cpbonnell.PlayingCards;
 
 
+import java.util.Comparator;
+
 /**
  * Created by christian_bonnell on 6/11/2015.
  */
@@ -8,9 +10,11 @@ public enum Ranks {
     TWO, THREE, FOUR, FIVE, SIX, SEVEN, EIGHT, NINE, TEN, JACK, QUEEN, KING, ACE;
 
     private static boolean acesHigh = true;
+    private static Ranks[] vals = Ranks.values();
     public static void setAcesHigh(boolean setting){
         Ranks.acesHigh = setting;
     }
+    public static boolean getAcesHigh() {return Ranks.acesHigh;}
 
     public boolean isFace(){
         if(this == JACK || this == QUEEN || this == KING || this == ACE){
@@ -19,17 +23,35 @@ public enum Ranks {
             return false;
         }
     }
-
     
-    public int compare(Ranks r){
-        if((this == ACE || r == ACE) && !this.acesHigh){
-            return -this.compareTo(r);
-        } else {
-            return this.compareTo(r);
+    public static Comparator<Ranks> acesHighComparator = new Comparator<Ranks>() {
+        @Override
+        public int compare(Ranks o1, Ranks o2) {
+            return o1.compareTo(o2);
         }
-
-        // The above code should handle ALL possibilities, so if execution reaches
-        // this point, we have a problem.
+    };
+    
+    public static Comparator<Ranks> acesLowComparator = new Comparator<Ranks>(){
+        
+        public int compare(Ranks o1, Ranks o2){
+            if((o1 == Ranks.ACE || o2 == Ranks.ACE) && Ranks.getAcesHigh()){
+                return -o1.compareTo(o2);
+            } else {
+                return o1.compareTo(o2);
+            }
+        }
+    };
+    
+    // functions to provide "wrap around" ability with Aces.
+    public Ranks next(){
+        if(this == ACE) return TWO;
+        else return vals[this.ordinal() + 1];
+    }
+    
+    public Ranks previous(){
+        if(this == TWO) return ACE;
+        else return vals[this.ordinal() - 1];
+        
     }
     
     public String toChars(){

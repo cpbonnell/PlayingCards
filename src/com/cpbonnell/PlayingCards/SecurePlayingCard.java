@@ -86,5 +86,10 @@ class SecurePlayingCard implements IPlayingCard {
     public boolean isValid(){
         return this.referencedCard != BLANK_CARD;
     }
-    
+
+
+    @Override
+    public int compareTo(final IPlayingCard o) {
+        return this.referencedCard.compareTo(o);
+    }
 }
