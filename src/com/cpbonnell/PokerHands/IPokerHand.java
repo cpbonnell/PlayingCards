@@ -36,7 +36,7 @@ public interface IPokerHand {
     // Return a 10-character string representation of the 5-card hand
     String toChars();
     
-    
+    PokerHandClass getHandClassification();
      
     
     
