@@ -1,7 +1,6 @@
-package com.cpbonnell.PokerHands;
+package com.cpbonnell.cards.PokerHands;
 
-import com.cpbonnell.PlayingCards.IPlayingCard;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import com.cpbonnell.cards.PlayingCards.IPlayingCard;
 
 import java.util.List;
 
@@ -34,7 +33,7 @@ public enum PokerHandClass {
     // Main version of the function that contains the logic
     public static PokerHandClass classifyHand(PokerHandMetadata meta){
         
-        // Start be extracting the relevant metadata
+        // Start by extracting the relevant metadata
         int npair = meta.getPairs().size();
         int ntrip = meta.getTriples().size();
         int nquad = meta.getQuads().size();
@@ -43,7 +42,7 @@ public enum PokerHandClass {
         
         
         // By far the most common hand we will run into is the "one pair" class, followed by the "two pair"
-        // and the nthree of a kind
+        // and the three of a kind
         if(npair == 1 && ntrip == 0) return ONE_PAIR;
         if(npair == 2) return TWO_PAIR;
         if(npair == 0 && ntrip == 1) return THREE_KIND;

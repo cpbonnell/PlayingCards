@@ -1,11 +1,9 @@
-package com.cpbonnell.PokerHands;
+package com.cpbonnell.cards.PokerHands;
 
-import com.cpbonnell.PlayingCards.IPlayingCard;
-import com.cpbonnell.PlayingCards.Ranks;
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
+import com.cpbonnell.cards.PlayingCards.IPlayingCard;
+import com.cpbonnell.cards.PlayingCards.Ranks;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 

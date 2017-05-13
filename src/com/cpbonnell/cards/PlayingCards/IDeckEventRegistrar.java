@@ -1,4 +1,4 @@
-package com.cpbonnell.PlayingCards;
+package com.cpbonnell.cards.PlayingCards;
 
 
 import java.util.function.Consumer;

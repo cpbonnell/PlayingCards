@@ -1,6 +1,4 @@
-package com.cpbonnell.PlayingCards;
-
-import java.util.Comparator;
+package com.cpbonnell.cards.PlayingCards;
 
 /**
  * Created by christian_bonnell on 6/11/2015.

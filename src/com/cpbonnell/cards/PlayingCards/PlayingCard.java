@@ -1,6 +1,4 @@
-package com.cpbonnell.PlayingCards;
-
-import com.sun.javaws.exceptions.InvalidArgumentException;
+package com.cpbonnell.cards.PlayingCards;
 
 /**
  * Provides a representation of a basic playing card.

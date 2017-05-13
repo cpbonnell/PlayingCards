@@ -1,7 +1,8 @@
-package com.cpbonnell.PokerHands;
+package com.cpbonnell.cards.PokerHands;
 
 
-import com.cpbonnell.PlayingCards.Ranks;
+import com.cpbonnell.cards.PlayingCards.Ranks;
+
 import java.util.List;
 
 /**

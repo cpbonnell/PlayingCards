@@ -1,4 +1,4 @@
-package com.cpbonnell.PlayingCards;
+package com.cpbonnell.cards.PlayingCards;
 
 /**
  * Provides a safely distributable facade pointing to another IPlayingCard.

@@ -1,9 +1,7 @@
-package com.cpbonnell.PlayingCards;
+package com.cpbonnell.cards.PlayingCards;
 
 import java.util.function.IntSupplier;
 import java.util.function.Consumer;
-
-import sun.reflect.generics.reflectiveObjects.NotImplementedException;
 
 import java.util.*;
 
