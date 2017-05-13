@@ -131,7 +131,7 @@ public class PokerHandMetadata implements IPokerHand, Comparable<PokerHandMetada
             IPlayingCard current = this.sortedCards.get(i);
             IPlayingCard previous = this.sortedCards.get(i-1);
             
-            // Check to see if all the suits march
+            // Check to see if all the suits match
             if(current.suit() != previous.suit()) this.suitsSame = false;
             
             // Check to see if the ranks are sequential, handling the special case where
